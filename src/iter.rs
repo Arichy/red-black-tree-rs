@@ -1,4 +1,4 @@
-use std::mem::ManuallyDrop;
+use std::{mem::ManuallyDrop, collections::HashSet};
 
 use crate::{
     RBTree,
@@ -8,7 +8,8 @@ use crate::{
 
 pub struct RBTreeIntoIter<K: Key, V: Value> {
     ptr: NodePtr<K, V>,
-    rb_tree: RBTree<K, V>,
+    rb_tree: ManuallyDrop<RBTree<K, V>>,
+    consumed_nodes: HashSet<NodePtr<K, V>>,
 }
 
 impl<K: Key, V: Value> Iterator for RBTreeIntoIter<K, V> {
@@ -26,8 +27,48 @@ impl<K: Key, V: Value> Iterator for RBTreeIntoIter<K, V> {
             let key = ManuallyDrop::into_inner(key_wrapper);
             let value = ManuallyDrop::into_inner(value_wrapper);
 
+            // Track this node as consumed
+            self.consumed_nodes.insert(self.ptr);
             self.ptr = next;
             Some((key, value))
+        }
+    }
+}
+
+impl<K: Key, V: Value> Drop for RBTreeIntoIter<K, V> {
+    fn drop(&mut self) {
+        // Manually clean up all nodes, handling consumed vs unconsumed differently
+        let mut all_nodes = vec![];
+        self.rb_tree.traverse(|node| {
+            all_nodes.push(node);
+        });
+
+        // Clean up data nodes
+        for node in all_nodes {
+            unsafe {
+                let mut b = Box::from_raw(node.as_ptr());
+                
+                // Check if this node's key/value were consumed during iteration
+                if self.consumed_nodes.contains(&node) {
+                    // Key/value already moved out, just drop the box
+                    // Don't try to drop the ManuallyDrop contents
+                } else {
+                    // Key/value still present, drop them properly
+                    if b.key.as_ptr().is_null() == false {
+                        ManuallyDrop::drop(b.key.assume_init_mut());
+                    }
+                    if b.value.as_ptr().is_null() == false {
+                        ManuallyDrop::drop(b.value.assume_init_mut());
+                    }
+                }
+                drop(b);
+            }
+        }
+
+        // Clean up sentinel nodes
+        unsafe {
+            drop(Box::from_raw(self.rb_tree.header.as_ptr()));
+            drop(Box::from_raw(self.rb_tree.nil.as_ptr()));
         }
     }
 }
@@ -40,7 +81,8 @@ impl<K: Key, V: Value> IntoIterator for RBTree<K, V> {
 
         RBTreeIntoIter {
             ptr: first,
-            rb_tree: self,
+            rb_tree: ManuallyDrop::new(self),
+            consumed_nodes: HashSet::new(),
         }
     }
 }
@@ -227,5 +269,24 @@ mod tests {
         }
 
         assert_eq!(tree.get(&10), Some(&"I'm ROOT"));
+    }
+
+    #[test]
+    fn test_into_iter_early_termination() {
+        // Test that memory is properly cleaned up even if iterator is dropped early
+        let tree = setup_tree();
+        let mut iter = tree.into_iter();
+        
+        // Only consume first two elements
+        let first = iter.next().unwrap();
+        let second = iter.next().unwrap();
+        
+        assert_eq!(first, (3, "three"));
+        assert_eq!(second, (5, "five"));
+        
+        // Drop the iterator early - this should not leak memory
+        drop(iter);
+        
+        // If we get here without segfault/panic, the test passes
     }
 }
