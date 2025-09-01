@@ -7,3 +7,6 @@ integration_test:
 
 prop_test:
     PROPTEST_CASES=10 cargo test --test prop_test -- --nocapture
+
+test:
+    PROPTEST_CASES=13 cargo nextest r
