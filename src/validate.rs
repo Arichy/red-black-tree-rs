@@ -57,7 +57,7 @@ impl<K: Key + Display> Display for RBTreeError<K> {
     }
 }
 
-impl<K: Key + Clone, V: Value + Clone> RBTree<K, V> {
+impl<K: Key + Clone + Debug, V: Value + Clone> RBTree<K, V> {
     pub fn validate(&self) -> Result<(), RBTreeError<K>> {
         // First validate BST properties using the trait
         if let Err(bst_error) = BSTValidator::validate_bst(self) {

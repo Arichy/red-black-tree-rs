@@ -17,7 +17,7 @@ proptest! {
         unique_keys.dedup();
 
         for key in &unique_keys {
-            assert!(tree.search(key).is_some());
+            assert!(tree.get(key).is_some());
         }
 
 
@@ -47,7 +47,7 @@ fn minimal() {
     tree.display();
 
     for key in &keys {
-        assert!(tree.search(key).is_some());
+        assert!(tree.get(key).is_some());
     }
 
     for key in &keys {

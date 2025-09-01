@@ -20,7 +20,7 @@ fn main() {
 
     for key in &unique_key {
         let now = Instant::now();
-        if let Some(v) = tree.search(key) {
+        if let Some(v) = tree.get(key) {
             if v != key {
                 panic!()
             }

@@ -11,11 +11,11 @@ pub(crate) enum Color {
     Black,
 }
 
-pub trait Key: PartialEq + PartialOrd + Display + Debug {}
-impl<T> Key for T where T: PartialEq + PartialOrd + Display + Debug {}
+pub trait Key: Ord {}
+impl<T> Key for T where T: Ord {}
 
-pub trait Value: Debug + Display {}
-impl<T> Value for T where T: Debug + Display {}
+pub trait Value {}
+impl<T> Value for T {}
 
 pub(crate) type NodePtr<K, V> = NonNull<RBNode<K, V>>;
 
@@ -31,18 +31,18 @@ pub struct RBNode<K: Key, V: Value> {
 
 impl<K: Key, V: Value> RBNode<K, V> {
     pub(crate) unsafe fn key(&self) -> &K {
-        self.key.assume_init_ref()
+        unsafe { self.key.assume_init_ref() }
     }
 
     pub(crate) unsafe fn key_mut(&mut self) -> &mut K {
-        self.key.assume_init_mut()
+        unsafe { self.key.assume_init_mut() }
     }
 
     pub(crate) unsafe fn value(&self) -> &V {
-        self.value.assume_init_ref()
+        unsafe { self.value.assume_init_ref() }
     }
 
     pub(crate) unsafe fn value_mut(&mut self) -> &mut V {
-        self.value.assume_init_mut()
+        unsafe { self.value.assume_init_mut() }
     }
 }

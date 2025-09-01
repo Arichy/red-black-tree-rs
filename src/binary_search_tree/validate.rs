@@ -32,7 +32,7 @@ pub(crate) trait BSTValidator<K: Key, V: Value> {
     fn count_nodes(&self) -> usize;
 }
 
-impl<K: Key, V: Value> BSTValidator<K, V> for RBTree<K, V> {
+impl<K: Key + Debug, V: Value> BSTValidator<K, V> for RBTree<K, V> {
     fn validate_bst(&self) -> Result<(), String> {
         // First validate the basic structure
         self.validate_structure()?;
@@ -165,7 +165,7 @@ impl<K: Key, V: Value> BSTValidator<K, V> for RBTree<K, V> {
     }
 }
 
-impl<K: Key, V: Value> RBTree<K, V> {
+impl<K: Key + Debug, V: Value> RBTree<K, V> {
     /// Helper method to detect cycles using DFS
     fn detect_cycle_util(
         &self,

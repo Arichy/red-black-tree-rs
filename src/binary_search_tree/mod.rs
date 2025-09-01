@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use crate::{
     RBTree,
     binary_tree::{BinaryTree, NodePosition},
@@ -12,10 +14,19 @@ pub(crate) enum InsertResult<K: Key, V: Value> {
 }
 
 pub(crate) trait BinarySearchTree<K: Key, V: Value>: BinaryTree<K, V> {
-    fn search(&self, key: &K) -> Option<&V>;
-    fn search_mut(&mut self, key: &K) -> Option<&mut V>;
+    fn search<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Ord;
+    fn search_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
+    where
+        K: Borrow<Q>,
+        Q: Ord;
     fn bs_insert(&mut self, key: K, value: V) -> InsertResult<K, V>;
-    fn bs_remove(&mut self, key: &K) -> NodePtr<K, V>;
+    fn bs_remove<Q: ?Sized>(&mut self, key: &Q) -> NodePtr<K, V>
+    where
+        K: Borrow<Q>,
+        Q: Ord;
 
     fn remove_node_with_no_or_one_child(&mut self, node_ptr: NodePtr<K, V>);
     fn remove_node_with_no_child(&mut self, node_ptr: NodePtr<K, V>);
@@ -23,7 +34,11 @@ pub(crate) trait BinarySearchTree<K: Key, V: Value>: BinaryTree<K, V> {
 }
 
 impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
-    fn search(&self, key: &K) -> Option<&V> {
+    fn search<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
         let mut cur: NodePtr<K, V> = unsafe { self.header.as_ref().right };
 
         while !self.is_nil(cur) {
@@ -31,11 +46,11 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
 
             let k = unsafe { cur_node.key() };
 
-            if key == k {
+            if key == k.borrow() {
                 return unsafe { Some(cur_node.value.assume_init_ref()) };
             }
 
-            if key < k {
+            if key < k.borrow() {
                 cur = cur_node.left;
             } else {
                 cur = cur_node.right;
@@ -45,13 +60,17 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
         None
     }
 
-    fn search_mut(&mut self, key: &K) -> Option<&mut V> {
+    fn search_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
         let mut cur: NodePtr<K, V> = unsafe { self.header.as_ref().right };
 
         while !self.is_nil(cur) {
             let cur_node = unsafe { cur.as_ref() };
 
-            let k = unsafe { cur_node.key() };
+            let k = unsafe { cur_node.key().borrow() };
 
             if key == k {
                 return unsafe { Some(cur.as_mut().value.assume_init_mut()) };
@@ -112,14 +131,18 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
         }
     }
 
-    fn bs_remove(&mut self, key: &K) -> NodePtr<K, V> {
+    fn bs_remove<Q: ?Sized>(&mut self, key: &Q) -> NodePtr<K, V>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
         let mut parent = self.header;
         let mut cur: NodePtr<K, V> = unsafe { parent.as_ref().right };
 
         while !self.is_nil(cur) {
             let cur_mut = unsafe { cur.as_mut() };
 
-            let k = unsafe { cur_mut.key() };
+            let k = unsafe { cur_mut.key().borrow() };
 
             if k == key {
                 let mut node_to_remove = cur;
@@ -141,23 +164,8 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
                         );
                     }
 
-                    // unsafe {
-                    //     println!(
-                    //         "after swap: cur: {}, inorder:predecessor: {}",
-                    //         cur.as_ref().key.assume_init_ref(),
-                    //         inorder_predecessor.as_ref().key.assume_init_ref()
-                    //     );
-                    // };
-
                     node_to_remove = inorder_predecessor;
                 }
-
-                // unsafe {
-                //     println!(
-                //         "node_to_remove:{}",
-                //         node_to_remove.as_ref().key.assume_init_read()
-                //     );
-                // }
 
                 self.remove_node_with_no_or_one_child(node_to_remove);
 

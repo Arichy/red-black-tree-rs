@@ -137,7 +137,7 @@ fn test_bst_property_maintained_during_insertions() {
 
         // Verify all previously inserted keys are still searchable
         for &prev_key in &inserted_keys {
-            match tree.search(&prev_key) {
+            match tree.get(&prev_key) {
                 Some(value) => assert_eq!(value, &format!("value_{}", prev_key)),
                 None => panic!(
                     "Previously inserted key {} not found after inserting {}",
@@ -181,7 +181,7 @@ fn test_bst_property_maintained_during_deletions() {
 
         // Verify remaining keys are still searchable
         for &remaining_key in &remaining_keys {
-            match tree.search(&remaining_key) {
+            match tree.get(&remaining_key) {
                 Some(value) => assert_eq!(value, &format!("value_{}", remaining_key)),
                 None => panic!(
                     "Remaining key {} not found after removing {}",
@@ -192,7 +192,7 @@ fn test_bst_property_maintained_during_deletions() {
 
         // Verify removed key is no longer searchable
         assert!(
-            tree.search(&key_to_remove).is_none(),
+            tree.get(&key_to_remove).is_none(),
             "Removed key {} still found in tree",
             key_to_remove
         );
@@ -205,7 +205,7 @@ fn test_duplicate_key_handling() {
 
     // Insert initial value
     tree.insert(42, "original");
-    assert_eq!(tree.search(&42), Some(&"original"));
+    assert_eq!(tree.get(&42), Some(&"original"));
 
     if let Err(e) = tree.validate() {
         panic!("Tree invalid after initial insert: {}", e);
@@ -214,7 +214,7 @@ fn test_duplicate_key_handling() {
     // Insert duplicate key with different value
     let old_value = tree.insert(42, "updated");
     assert_eq!(old_value, Some("original"));
-    assert_eq!(tree.search(&42), Some(&"updated"));
+    assert_eq!(tree.get(&42), Some(&"updated"));
 
     if let Err(e) = tree.validate() {
         panic!("Tree invalid after duplicate insert: {}", e);
@@ -223,7 +223,7 @@ fn test_duplicate_key_handling() {
     // Update again
     let old_value = tree.insert(42, "final");
     assert_eq!(old_value, Some("updated"));
-    assert_eq!(tree.search(&42), Some(&"final"));
+    assert_eq!(tree.get(&42), Some(&"final"));
 
     if let Err(e) = tree.validate() {
         panic!("Tree invalid after second update: {}", e);
@@ -280,7 +280,7 @@ fn test_edge_case_operations() {
     }
 
     // Tree should be empty now
-    assert!(tree.search(&42).is_none());
+    assert!(tree.get(&42).is_none());
 
     // Insert and remove same key multiple times
     for i in 0..5 {

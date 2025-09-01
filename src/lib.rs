@@ -6,6 +6,7 @@ use crate::{
     node::{Color, Key, NodePtr, RBNode, Value},
 };
 use std::{
+    borrow::Borrow,
     fmt::{Debug, Display},
     mem::{ManuallyDrop, MaybeUninit},
     ptr::NonNull,
@@ -97,22 +98,28 @@ impl<K: Key, V: Value> RBTree<K, V> {
         self._traverse(unsafe { node.as_ref().right }, f);
     }
 
-    pub fn search(&self, key: &K) -> Option<&V> {
+    pub(crate) fn search<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
         BinarySearchTree::search(self, key)
     }
 
-    pub fn get(&self, key: &K) -> Option<&V> {
+    pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
         self.search(key)
     }
 
-    pub fn get_mut(&mut self, key:&K) -> Option<&mut V> {
+    pub fn get_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
+    where
+        K: Borrow<Q>,
+        Q: Ord,
+    {
         self.search_mut(key)
-    }
-
-    pub fn count_nodes(&self) -> usize {
-        let mut count = 0;
-        self.traverse(|_| count += 1);
-        count
     }
 
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
@@ -406,7 +413,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
     }
 }
 
-impl<K: Key, V: Value> RBTree<K, V> {
+impl<K: Key + Debug, V: Value + Debug> RBTree<K, V> {
     /// Prints the tree in a beautiful, human-readable format.
     pub fn display(&self) {
         println!("╔══════════════════════════════════════════════════════════════╗");
@@ -435,7 +442,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
         };
 
         println!(
-            "{}[{}:{}] {} [ROOT]",
+            "{}[{:?}:{:?}] {} [ROOT]",
             color_symbol,
             unsafe { root_node.key() },
             unsafe { root_node.value() },
@@ -475,7 +482,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
             };
 
             println!(
-                "{}{}{}[{}:{}] {} [R]",
+                "{}{}{}[{:?}:{:?}] {} [R]",
                 prefix,
                 connector,
                 color_symbol,
@@ -503,7 +510,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
             };
 
             println!(
-                "{}└── {}[{}:{}] {} [L]",
+                "{}└── {}[{:?}:{:?}] {} [L]",
                 prefix,
                 color_symbol,
                 unsafe { left_node.key() },
@@ -542,7 +549,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
             Color::Black => "⚫",
         };
         print!(
-            "{}[{}:{}] ",
+            "{}[{:?}:{:?}] ",
             color_symbol,
             unsafe { node_ref.key() },
             unsafe { node_ref.value() }
@@ -563,7 +570,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
                 Color::Black => "⚫",
             };
             println!(
-                "Node {color_symbol} Key: {}, Value:{}",
+                "Node {color_symbol} Key: {:?}, Value:{:?}",
                 node.as_ref().key(),
                 node.as_ref().value()
             );
