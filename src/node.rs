@@ -1,6 +1,6 @@
 use std::{
     fmt::{Debug, Display},
-    mem::MaybeUninit,
+    mem::{ManuallyDrop, MaybeUninit},
     panic,
     ptr::NonNull,
 };
@@ -21,18 +21,28 @@ pub(crate) type NodePtr<K, V> = NonNull<RBNode<K, V>>;
 
 #[derive(Debug)]
 pub struct RBNode<K: Key, V: Value> {
-    pub(crate) key: MaybeUninit<K>,
-    pub(crate) value: MaybeUninit<V>,
+    pub(crate) key: MaybeUninit<ManuallyDrop<K>>,
+    pub(crate) value: MaybeUninit<ManuallyDrop<V>>,
     pub(crate) color: Color,
     pub(crate) left: NodePtr<K, V>,
     pub(crate) right: NodePtr<K, V>,
     pub(crate) parent: NodePtr<K, V>,
 }
 
-// impl<K: Key, V: Value> RBNode<K, V> {
-//     pub fn drop(ptr: NodePtr<K, V>) {
-//         unsafe {
-//             let _ = Box::from_raw(ptr.as_ptr());
-//         };
-//     }
-// }
+impl<K: Key, V: Value> RBNode<K, V> {
+    pub(crate) unsafe fn key(&self) -> &K {
+        self.key.assume_init_ref()
+    }
+
+    pub(crate) unsafe fn key_mut(&mut self) -> &mut K {
+        self.key.assume_init_mut()
+    }
+
+    pub(crate) unsafe fn value(&self) -> &V {
+        self.value.assume_init_ref()
+    }
+
+    pub(crate) unsafe fn value_mut(&mut self) -> &mut V {
+        self.value.assume_init_mut()
+    }
+}

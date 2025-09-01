@@ -72,7 +72,7 @@ impl<K: Key + Clone, V: Value + Clone> RBTree<K, V> {
         // property 2: root is black
         if unsafe { root.as_ref() }.color == Color::Red {
             return Err(RBTreeError::RootNotBlack {
-                root: unsafe { root.as_ref().key.assume_init_ref() }.clone(),
+                root: unsafe { root.as_ref().key() }.clone(),
             });
         }
 
@@ -94,16 +94,16 @@ impl<K: Key + Clone, V: Value + Clone> RBTree<K, V> {
             let left_child = unsafe { node_ref.left.as_ref() };
             if left_child.color == Color::Red {
                 return Err(RBTreeError::RedParentRedChild {
-                    parent: unsafe { node_ref.key.assume_init_ref() }.clone(),
-                    child: unsafe { left_child.key.assume_init_ref() }.clone(),
+                    parent: unsafe { node_ref.key() }.clone(),
+                    child: unsafe { left_child.key() }.clone(),
                 });
             }
 
             let right_child = unsafe { node_ref.right.as_ref() };
             if right_child.color == Color::Red {
                 return Err(RBTreeError::RedParentRedChild {
-                    parent: unsafe { node_ref.key.assume_init_ref() }.clone(),
-                    child: unsafe { right_child.key.assume_init_ref() }.clone(),
+                    parent: unsafe { node_ref.key() }.clone(),
+                    child: unsafe { right_child.key() }.clone(),
                 });
             }
         }
@@ -114,7 +114,7 @@ impl<K: Key + Clone, V: Value + Clone> RBTree<K, V> {
         // property 5: black height must be same for all paths
         if left_b_height != right_b_height {
             return Err(RBTreeError::BlackHeightMismatch {
-                node: unsafe { node_ref.key.assume_init_ref() }.clone(),
+                node: unsafe { node_ref.key() }.clone(),
                 left_b_height,
                 right_b_height,
             });

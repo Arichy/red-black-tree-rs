@@ -7,13 +7,13 @@ use crate::{
 };
 use std::{
     fmt::{Debug, Display},
-    mem::MaybeUninit,
+    mem::{ManuallyDrop, MaybeUninit},
     ptr::NonNull,
 };
 
 mod binary_search_tree;
 mod binary_tree;
-// mod iter;
+mod iter;
 mod node;
 mod validate;
 
@@ -72,8 +72,8 @@ impl<K: Key, V: Value> RBTree<K, V> {
 
     fn new_node(&self, key: K, value: V) -> NodePtr<K, V> {
         let node = Box::new(RBNode {
-            key: MaybeUninit::new(key),
-            value: MaybeUninit::new(value),
+            key: MaybeUninit::new(ManuallyDrop::new(key)),
+            value: MaybeUninit::new(ManuallyDrop::new(value)),
             color: Color::Red,
             left: self.nil,
             right: self.nil,
@@ -99,6 +99,14 @@ impl<K: Key, V: Value> RBTree<K, V> {
 
     pub fn search(&self, key: &K) -> Option<&V> {
         BinarySearchTree::search(self, key)
+    }
+
+    pub fn get(&self, key: &K) -> Option<&V> {
+        self.search(key)
+    }
+
+    pub fn get_mut(&mut self, key:&K) -> Option<&mut V> {
+        self.search_mut(key)
     }
 
     pub fn count_nodes(&self) -> usize {
@@ -243,7 +251,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
             if removed.as_ref().color == Color::Red {
                 let removed_box = Box::from_raw(removed.as_ptr());
                 let removed_node = *removed_box;
-                let value = removed_node.value.assume_init();
+                let value = ManuallyDrop::into_inner(removed_node.value.assume_init());
                 self.len -= 1;
                 return Some(value);
             }
@@ -262,7 +270,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
         unsafe {
             let removed_box = Box::from_raw(removed.as_ptr());
             let removed_node = *removed_box;
-            let value = removed_node.value.assume_init();
+            let value = ManuallyDrop::into_inner(removed_node.value.assume_init());
             self.len -= 1;
             Some(value)
         }
@@ -429,8 +437,8 @@ impl<K: Key, V: Value> RBTree<K, V> {
         println!(
             "{}[{}:{}] {} [ROOT]",
             color_symbol,
-            unsafe { root_node.key.assume_init_ref() },
-            unsafe { root_node.value.assume_init_ref() },
+            unsafe { root_node.key() },
+            unsafe { root_node.value() },
             color_symbol
         );
 
@@ -471,8 +479,8 @@ impl<K: Key, V: Value> RBTree<K, V> {
                 prefix,
                 connector,
                 color_symbol,
-                unsafe { right_node.key.assume_init_ref() },
-                unsafe { right_node.value.assume_init_ref() },
+                unsafe { right_node.key() },
+                unsafe { right_node.value() },
                 color_symbol
             );
 
@@ -498,8 +506,8 @@ impl<K: Key, V: Value> RBTree<K, V> {
                 "{}└── {}[{}:{}] {} [L]",
                 prefix,
                 color_symbol,
-                unsafe { left_node.key.assume_init_ref() },
-                unsafe { left_node.value.assume_init_ref() },
+                unsafe { left_node.key() },
+                unsafe { left_node.value() },
                 color_symbol
             );
 
@@ -536,8 +544,8 @@ impl<K: Key, V: Value> RBTree<K, V> {
         print!(
             "{}[{}:{}] ",
             color_symbol,
-            unsafe { node_ref.key.assume_init_ref() },
-            unsafe { node_ref.value.assume_init_ref() }
+            unsafe { node_ref.key() },
+            unsafe { node_ref.value() }
         );
 
         self.display_inorder(node_ref.right);
@@ -556,8 +564,8 @@ impl<K: Key, V: Value> RBTree<K, V> {
             };
             println!(
                 "Node {color_symbol} Key: {}, Value:{}",
-                node.as_ref().key.assume_init_ref(),
-                node.as_ref().value.assume_init_ref()
+                node.as_ref().key(),
+                node.as_ref().value()
             );
         };
     }
@@ -596,8 +604,8 @@ impl<K: Key + Display + Debug, V: Display + Debug> RBTree<K, V> {
         write!(
             f,
             "{}:{} ({}) ",
-            unsafe { node_ref.key.assume_init_ref() },
-            unsafe { node_ref.value.assume_init_ref() },
+            unsafe { node_ref.key() },
+            unsafe { node_ref.value() },
             color_char
         )?;
 
@@ -612,7 +620,17 @@ impl<K: Key, V: Value> Drop for RBTree<K, V> {
             nodes.push(node);
         });
         for node in nodes {
-            let _ = unsafe { Box::from_raw(node.as_ptr()) };
+            unsafe {
+                let mut b = Box::from_raw(node.as_ptr()); // don't use * dereference because it requires a copy from heap to stack
+                ManuallyDrop::drop(b.key.assume_init_mut()); // just drop on heap
+                ManuallyDrop::drop(b.value.assume_init_mut());
+                drop(b);
+            };
+        }
+
+        unsafe {
+            drop(Box::from_raw(self.header.as_ptr()));
+            drop(Box::from_raw(self.nil.as_ptr()));
         }
     }
 }

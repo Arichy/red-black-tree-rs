@@ -13,6 +13,7 @@ pub(crate) enum InsertResult<K: Key, V: Value> {
 
 pub(crate) trait BinarySearchTree<K: Key, V: Value>: BinaryTree<K, V> {
     fn search(&self, key: &K) -> Option<&V>;
+    fn search_mut(&mut self, key: &K) -> Option<&mut V>;
     fn bs_insert(&mut self, key: K, value: V) -> InsertResult<K, V>;
     fn bs_remove(&mut self, key: &K) -> NodePtr<K, V>;
 
@@ -28,10 +29,32 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
         while !self.is_nil(cur) {
             let cur_node = unsafe { cur.as_ref() };
 
-            let k = unsafe { cur_node.key.assume_init_ref() };
+            let k = unsafe { cur_node.key() };
 
             if key == k {
                 return unsafe { Some(cur_node.value.assume_init_ref()) };
+            }
+
+            if key < k {
+                cur = cur_node.left;
+            } else {
+                cur = cur_node.right;
+            }
+        }
+
+        None
+    }
+
+    fn search_mut(&mut self, key: &K) -> Option<&mut V> {
+        let mut cur: NodePtr<K, V> = unsafe { self.header.as_ref().right };
+
+        while !self.is_nil(cur) {
+            let cur_node = unsafe { cur.as_ref() };
+
+            let k = unsafe { cur_node.key() };
+
+            if key == k {
+                return unsafe { Some(cur.as_mut().value.assume_init_mut()) };
             }
 
             if key < k {
@@ -52,12 +75,11 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
 
         while !self.is_nil(cur) {
             let mut cur_mut = unsafe { cur.as_mut() };
-            let k = unsafe { cur_mut.key.assume_init_ref() };
+            let k = unsafe { cur_mut.key() };
 
             if &key == k {
                 // replace
-                let old_value =
-                    std::mem::replace(unsafe { cur_mut.value.assume_init_mut() }, value);
+                let old_value = std::mem::replace(unsafe { cur_mut.value_mut() }, value);
 
                 return InsertResult::Old(old_value);
             }
@@ -97,7 +119,7 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
         while !self.is_nil(cur) {
             let cur_mut = unsafe { cur.as_mut() };
 
-            let k = unsafe { cur_mut.key.assume_init_ref() };
+            let k = unsafe { cur_mut.key() };
 
             if k == key {
                 let mut node_to_remove = cur;
@@ -287,10 +309,7 @@ mod tests {
         tree.bs_remove(&10);
         assert_eq!(tree.search(&10), None);
         assert_eq!(tree.search(&7), Some(&"seven"));
-        assert_eq!(
-            unsafe { tree.header.as_ref().right.as_ref().key.assume_init_ref() },
-            &7
-        );
+        assert_eq!(unsafe { tree.header.as_ref().right.as_ref().key() }, &7);
     }
 
     #[test]
@@ -311,6 +330,6 @@ mod tests {
         assert_eq!(tree.search(&5), Some(&"five"));
         let root = unsafe { tree.header.as_ref().right };
         assert!(!tree.is_nil(root));
-        assert_eq!(unsafe { root.as_ref().key.assume_init_ref() }, &5);
+        assert_eq!(unsafe { root.as_ref().key() }, &5);
     }
 }

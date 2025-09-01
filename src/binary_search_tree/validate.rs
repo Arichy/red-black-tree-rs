@@ -60,7 +60,7 @@ impl<K: Key, V: Value> BSTValidator<K, V> for RBTree<K, V> {
         }
 
         let node_ref = unsafe { node.as_ref() };
-        let key = unsafe { node_ref.key.assume_init_ref() };
+        let key = unsafe { node_ref.key() };
 
         // Check if current node violates BST property with bounds
         if let Some(min) = min_bound {
@@ -215,7 +215,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
             }
 
             let node_ref = unsafe { node.as_ref() };
-            let key = unsafe { node_ref.key.assume_init_ref() };
+            let key = unsafe { node_ref.key() };
 
             if let Some(ref prev) = prev_key {
                 if key <= prev {

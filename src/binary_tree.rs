@@ -57,11 +57,15 @@ impl<K: Key, V: Value> BinaryTree<K, V> for RBTree<K, V> {
         let mut cur = unsafe { node.as_ref().left };
 
         if self.is_nil(cur) {
-            let mut p = unsafe { cur.as_ref() }.parent;
-            let mut x = cur;
+            let mut p = unsafe { node.as_ref() }.parent;
+            let mut x = node;
             while !self.is_header(p) && x == unsafe { p.as_ref() }.left {
                 x = p;
                 p = unsafe { p.as_ref() }.parent;
+            }
+
+            if self.is_header(p) {
+                return self.nil;
             }
             return p;
         }
@@ -79,21 +83,25 @@ impl<K: Key, V: Value> BinaryTree<K, V> for RBTree<K, V> {
         let mut cur = unsafe { node.as_ref().right };
 
         if self.is_nil(cur) {
-            let mut p = unsafe { cur.as_ref() }.parent;
-            let mut x = cur;
+            let mut p = unsafe { node.as_ref() }.parent;
+            let mut x = node;
             while !self.is_header(p) && x == unsafe { p.as_ref() }.right {
                 x = p;
                 p = unsafe { p.as_ref() }.parent;
+            }
+
+            if self.is_header(p) {
+                return self.nil;
             }
             return p;
         }
 
         loop {
-            let right = unsafe { cur.as_ref().left };
-            if self.is_nil(right) {
+            let left = unsafe { cur.as_ref().left };
+            if self.is_nil(left) {
                 return cur;
             }
-            cur = right;
+            cur = left;
         }
     }
 
@@ -242,25 +250,13 @@ mod tests {
         let root = unsafe { tree.header.as_ref().right };
         let node_5 = unsafe { root.as_ref().left };
         let node_15 = unsafe { root.as_ref().right };
-        assert_eq!(
-            unsafe { tree.sibling(node_5).as_ref().key.assume_init_ref() },
-            &15
-        );
-        assert_eq!(
-            unsafe { tree.sibling(node_15).as_ref().key.assume_init_ref() },
-            &5
-        );
+        assert_eq!(unsafe { tree.sibling(node_5).as_ref().key() }, &15);
+        assert_eq!(unsafe { tree.sibling(node_15).as_ref().key() }, &5);
 
         let node_3 = unsafe { node_5.as_ref().left };
         let node_7 = unsafe { node_5.as_ref().right };
-        assert_eq!(
-            unsafe { tree.sibling(node_3).as_ref().key.assume_init_ref() },
-            &7
-        );
-        assert_eq!(
-            unsafe { tree.sibling(node_7).as_ref().key.assume_init_ref() },
-            &3
-        );
+        assert_eq!(unsafe { tree.sibling(node_3).as_ref().key() }, &7);
+        assert_eq!(unsafe { tree.sibling(node_7).as_ref().key() }, &3);
     }
 
     #[test]
@@ -270,7 +266,7 @@ mod tests {
         let node_5 = unsafe { root.as_ref().left };
         let node_3 = unsafe { node_5.as_ref().left };
         let grandparent = tree.grandparent(node_3);
-        assert_eq!(unsafe { grandparent.as_ref().key.assume_init_ref() }, &10);
+        assert_eq!(unsafe { grandparent.as_ref().key() }, &10);
     }
 
     #[test]
@@ -281,11 +277,11 @@ mod tests {
         let node_15 = unsafe { root.as_ref().right };
         let node_3 = unsafe { node_5.as_ref().left };
         let uncle = tree.uncle(node_3);
-        assert_eq!(unsafe { uncle.as_ref().key.assume_init_ref() }, &15);
+        assert_eq!(unsafe { uncle.as_ref().key() }, &15);
 
         let node_12 = unsafe { node_15.as_ref().left };
         let uncle = tree.uncle(node_12);
-        assert_eq!(unsafe { uncle.as_ref().key.assume_init_ref() }, &5);
+        assert_eq!(unsafe { uncle.as_ref().key() }, &5);
     }
 
     #[test]
@@ -294,14 +290,11 @@ mod tests {
         let root = unsafe { tree.header.as_ref().right };
         tree.rotate_left(root);
         let new_root = unsafe { tree.header.as_ref().right };
-        assert_eq!(unsafe { new_root.as_ref().key.assume_init_ref() }, &15);
+        assert_eq!(unsafe { new_root.as_ref().key() }, &15);
         let new_root_left = unsafe { new_root.as_ref().left };
-        assert_eq!(unsafe { new_root_left.as_ref().key.assume_init_ref() }, &10);
+        assert_eq!(unsafe { new_root_left.as_ref().key() }, &10);
         let new_root_left_right = unsafe { new_root_left.as_ref().right };
-        assert_eq!(
-            unsafe { new_root_left_right.as_ref().key.assume_init_ref() },
-            &12
-        );
+        assert_eq!(unsafe { new_root_left_right.as_ref().key() }, &12);
     }
 
     #[test]
@@ -310,17 +303,11 @@ mod tests {
         let root = unsafe { tree.header.as_ref().right };
         tree.rotate_right(root);
         let new_root = unsafe { tree.header.as_ref().right };
-        assert_eq!(unsafe { new_root.as_ref().key.assume_init_ref() }, &5);
+        assert_eq!(unsafe { new_root.as_ref().key() }, &5);
         let new_root_right = unsafe { new_root.as_ref().right };
-        assert_eq!(
-            unsafe { new_root_right.as_ref().key.assume_init_ref() },
-            &10
-        );
+        assert_eq!(unsafe { new_root_right.as_ref().key() }, &10);
         let new_root_right_left = unsafe { new_root_right.as_ref().left };
-        assert_eq!(
-            unsafe { new_root_right_left.as_ref().key.assume_init_ref() },
-            &7
-        );
+        assert_eq!(unsafe { new_root_right_left.as_ref().key() }, &7);
     }
 
     #[test]
@@ -329,7 +316,7 @@ mod tests {
         let root = unsafe { tree.header.as_ref().right };
         let predecessor = tree.inorder_predecessor(root);
         assert!(!tree.is_nil(predecessor));
-        assert_eq!(unsafe { predecessor.as_ref().key.assume_init_ref() }, &7);
+        assert_eq!(unsafe { predecessor.as_ref().key() }, &7);
     }
 
     #[test]
