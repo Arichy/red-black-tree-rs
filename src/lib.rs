@@ -643,3 +643,6 @@ impl<K: Key, V: Value> Drop for RBTree<K, V> {
         }
     }
 }
+
+unsafe impl<K: Key + Send, V: Value + Send> Send for RBTree<K, V> {}
+unsafe impl<K: Key + Sync, V: Value + Sync> Sync for RBTree<K, V> {}
