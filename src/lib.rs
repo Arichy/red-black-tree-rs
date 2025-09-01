@@ -19,6 +19,9 @@ mod validate;
 // Re-export the validation trait for external use
 use binary_search_tree::validate::BSTValidator;
 
+// Re-export our simple BinarySearchTree implementation
+pub use binary_search_tree::binary_search_tree_impl::BinarySearchTree as SimpleBST;
+
 #[derive(Debug)]
 pub struct RBTree<K: Key, V: Value> {
     header: NodePtr<K, V>,

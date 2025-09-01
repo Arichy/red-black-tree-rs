@@ -6,6 +6,7 @@ use crate::{
     node::{Key, NodePtr, Value},
 };
 
+pub mod binary_search_tree_impl;
 pub mod validate;
 
 pub(crate) enum InsertResult<K: Key, V: Value> {

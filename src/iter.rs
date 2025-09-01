@@ -1,4 +1,4 @@
-use std::{mem::ManuallyDrop, collections::HashSet};
+use std::{collections::HashSet, mem::ManuallyDrop};
 
 use crate::{
     RBTree,
@@ -47,7 +47,7 @@ impl<K: Key, V: Value> Drop for RBTreeIntoIter<K, V> {
         for node in all_nodes {
             unsafe {
                 let mut b = Box::from_raw(node.as_ptr());
-                
+
                 // Check if this node's key/value were consumed during iteration
                 if self.consumed_nodes.contains(&node) {
                     // Key/value already moved out, just drop the box
@@ -276,17 +276,17 @@ mod tests {
         // Test that memory is properly cleaned up even if iterator is dropped early
         let tree = setup_tree();
         let mut iter = tree.into_iter();
-        
+
         // Only consume first two elements
         let first = iter.next().unwrap();
         let second = iter.next().unwrap();
-        
+
         assert_eq!(first, (3, "three"));
         assert_eq!(second, (5, "five"));
-        
+
         // Drop the iterator early - this should not leak memory
         drop(iter);
-        
+
         // If we get here without segfault/panic, the test passes
     }
 }
