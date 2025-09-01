@@ -122,7 +122,7 @@ impl<'a, K: Key, V: Value> IntoIterator for &'a mut RBTree<K, V> {
 }
 
 impl<K: Key, V: Value> RBTree<K, V> {
-    fn iter(&self) -> RBTreeIter<'_, K, V> {
+    pub fn iter(&self) -> RBTreeIter<'_, K, V> {
         let first = self.inorder_successor(self.header);
 
         RBTreeIter {
@@ -131,7 +131,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
         }
     }
 
-    fn iter_mut(&mut self) -> RBTreeIterMut<'_, K, V> {
+    pub fn iter_mut(&mut self) -> RBTreeIterMut<'_, K, V> {
         let first = self.inorder_successor(self.header);
 
         RBTreeIterMut {
