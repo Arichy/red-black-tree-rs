@@ -1,10 +1,8 @@
 use crate::{
     RBTree,
-    binary_search_tree::BinarySearchTree,
-    binary_tree::BinaryTree,
     node::{Key, NodePtr, Value},
 };
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 /// Validation trait for Binary Search Trees
 pub(crate) trait BSTValidator<K: Key, V: Value> {
@@ -431,60 +429,4 @@ mod tests {
         }
         assert_eq!(tree.count_nodes(), 20);
     }
-
-    // #[test]
-    // fn test_remove() {
-    //     let mut tree = RBTree::new();
-    //     let keys = vec![50, 30, 70, 20, 40, 60, 80, 10, 25, 35, 45, 55, 65, 75, 85];
-
-    //     // Insert all keys
-    //     for &key in &keys {
-    //         tree.bs_insert(key, format!("value_{}", key));
-    //     }
-
-    //     if let Err(e) = tree.validate_bst() {
-    //         panic!("Tree invalid after all insertions: {}", e);
-    //     }
-
-    //     tree.display();
-
-    //     // Remove keys in random order
-    //     let removal_order = [35, 80, 20, 70, 25, 85, 40, 10, 60, 45, 75, 55, 65, 30, 50];
-    //     let mut remaining_keys: std::collections::HashSet<i32> = keys.iter().cloned().collect();
-
-    //     for &key_to_remove in &removal_order {
-    //         let removed_node = tree.bs_remove(&key_to_remove);
-    //         assert_eq!(
-    //             unsafe { removed_node.as_ref().value.assume_init_ref() },
-    //             &format!("value_{}", key_to_remove)
-    //         );
-    //         remaining_keys.remove(&key_to_remove);
-
-    //         // Validate BST property after each removal
-    //         if let Err(e) = tree.validate_bst() {
-    //             panic!(
-    //                 "BST property violated after removing {}: {}",
-    //                 key_to_remove, e
-    //             );
-    //         }
-
-    //         // Verify remaining keys are still searchable
-    //         for &remaining_key in &remaining_keys {
-    //             match tree.search(&remaining_key) {
-    //                 Some(value) => assert_eq!(value, &format!("value_{}", remaining_key)),
-    //                 None => panic!(
-    //                     "Remaining key {} not found after removing {}",
-    //                     remaining_key, key_to_remove
-    //                 ),
-    //             }
-    //         }
-
-    //         // Verify removed key is no longer searchable
-    //         assert!(
-    //             tree.search(&key_to_remove).is_none(),
-    //             "Removed key {} still found in tree",
-    //             key_to_remove
-    //         );
-    //     }
-    // }
 }

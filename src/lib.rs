@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use crate::{
     binary_search_tree::{BinarySearchTree, InsertResult},
     binary_tree::{BinaryTree, NodePosition},
@@ -125,7 +123,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         match self.bs_insert(key, value) {
             InsertResult::Old(old_value) => Some(old_value),
-            InsertResult::New(mut red_node) => {
+            InsertResult::New(red_node) => {
                 self.insert_fixup(red_node);
                 self.len += 1;
                 None
@@ -246,7 +244,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
     pub fn remove(&mut self, key: &K) -> Option<V> {
         // println!("REMOVE::: {key}");
         // self.display();
-        let mut removed = self.bs_remove(key);
+        let removed = self.bs_remove(key);
         // print!("removed:");
         // self.display_node(removed);
         if self.is_nil(removed) {
@@ -332,7 +330,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
     }
 
     fn remove_fixup_black_sibling(&mut self, double_black: NodePtr<K, V>, parent: NodePtr<K, V>) {
-        let mut sibling = self.sibling_of_nil(parent, double_black);
+        let sibling = self.sibling_of_nil(parent, double_black);
 
         let (far_nephew, near_nephew) = unsafe {
             let left_nephew = sibling.as_ref().left;
@@ -375,7 +373,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
         mut parent: NodePtr<K, V>,
         mut sibling: NodePtr<K, V>,
         double_black: NodePtr<K, V>,
-        mut far_nephew: NodePtr<K, V>,
+        far_nephew: NodePtr<K, V>,
     ) {
         // case 1-2: if far nephew is red
         //   - rotate P, let S up
@@ -417,21 +415,21 @@ impl<K: Key + Debug, V: Value + Debug> RBTree<K, V> {
     /// Prints the tree in a beautiful, human-readable format.
     pub fn display(&self) {
         println!("╔══════════════════════════════════════════════════════════════╗");
-        println!("║                        Red-Black Tree                       ║");
+        println!("║                        Red-Black Tree                        ║");
         println!("╠══════════════════════════════════════════════════════════════╣");
 
         let root = unsafe { self.header.as_ref().right };
         if self.is_nil(root) {
             println!("║                        <EMPTY TREE>                         ║");
-            println!("╚══════════════════════════════════════════════════════════════╝");
+            println!("╚═════════════════════════════════════════════════════════════╝");
             return;
         }
 
         // Count nodes for statistics
         let node_count = self.count_nodes();
         println!("║ Total nodes: {:<47} ║", node_count);
-        println!("║ Format: [key:value] (Color) [L/R]                           ║");
-        println!("║ Colors: 🔴Red  ⚫Black                                     ║");
+        println!("║ Format: [key:value] (Color) [L/R]                            ║");
+        println!("║ Colors: 🔴Red  ⚫Black                                       ║");
         println!("╚══════════════════════════════════════════════════════════════╝");
         println!();
 
@@ -558,6 +556,7 @@ impl<K: Key + Debug, V: Value + Debug> RBTree<K, V> {
         self.display_inorder(node_ref.right);
     }
 
+    #[allow(dead_code)]
     fn display_node(&self, node: NodePtr<K, V>) {
         if self.is_nil(node) {
             println!("<nil>");
@@ -623,7 +622,7 @@ impl<K: Key + Display + Debug, V: Display + Debug> RBTree<K, V> {
 impl<K: Key, V: Value> Drop for RBTree<K, V> {
     fn drop(&mut self) {
         let mut nodes = vec![];
-        self.traverse(|node| unsafe {
+        self.traverse(|node| {
             nodes.push(node);
         });
         for node in nodes {

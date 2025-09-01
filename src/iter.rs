@@ -1,4 +1,4 @@
-use std::{mem::ManuallyDrop, ptr::NonNull};
+use std::mem::ManuallyDrop;
 
 use crate::{
     RBTree,
@@ -159,7 +159,7 @@ mod tests {
 
     #[test]
     fn test_into_iter() {
-        let mut tree = setup_tree();
+        let tree = setup_tree();
         let mut items = vec![];
         for item in tree {
             items.push(item);
@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_iter() {
-        let mut tree = setup_tree();
+        let tree = setup_tree();
         let mut items = vec![];
         for item in &tree {
             items.push(item);

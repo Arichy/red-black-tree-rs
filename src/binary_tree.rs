@@ -17,6 +17,7 @@ pub(crate) trait BinaryTree<K: Key, V: Value> {
     fn inorder_successor(&self, node: NodePtr<K, V>) -> NodePtr<K, V>;
     fn rotate_left(&mut self, node: NodePtr<K, V>);
     fn rotate_right(&mut self, node: NodePtr<K, V>);
+    #[allow(dead_code)]
     fn sibling(&self, node: NodePtr<K, V>) -> NodePtr<K, V>;
     fn grandparent(&self, node: NodePtr<K, V>) -> NodePtr<K, V>;
     fn uncle(&self, node: NodePtr<K, V>) -> NodePtr<K, V>;

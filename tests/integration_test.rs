@@ -23,10 +23,7 @@ fn test_insert_multiple_nodes_and_validate() {
     let keys = [10, 85, 15, 70, 20, 60, 30, 50, 65, 80, 90, 40, 5, 55];
 
     for &key in &keys {
-        println!("inserting {key}");
         tree.insert(key, "");
-        tree.display();
-        println!("");
         if let Err(e) = tree.validate() {
             panic!("Tree invalid after inserting {}: {}", key, e);
         }
@@ -310,8 +307,6 @@ fn test_large_tree_validation() {
         hasher.finish()
     });
 
-    println!("keys to insert: {:?}", keys);
-
     // Insert all keys
     for &key in &keys {
         tree.insert(key, format!("large_value_{}", key));
@@ -322,7 +317,6 @@ fn test_large_tree_validation() {
                 panic!("Large tree invalid after inserting up to {}: {}", key, e);
             }
         }
-        println!("inserted key: {key} successfully");
     }
 
     // Final validation
@@ -340,8 +334,6 @@ fn test_large_tree_validation() {
                 panic!("Large tree invalid after removing up to {}: {}", key, e);
             }
         }
-
-        println!("remove key: {key} successfully");
     }
 
     // Final validation after removals

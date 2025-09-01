@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 use crate::{
     RBTree,
     binary_tree::{BinaryTree, NodePosition},
-    node::{Color, Key, NodePtr, RBNode, Value},
+    node::{Key, NodePtr, Value},
 };
 
 pub mod validate;
@@ -93,7 +93,7 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
         let mut node_position = NodePosition::Right;
 
         while !self.is_nil(cur) {
-            let mut cur_mut = unsafe { cur.as_mut() };
+            let cur_mut = unsafe { cur.as_mut() };
             let k = unsafe { cur_mut.key() };
 
             if &key == k {
@@ -116,7 +116,7 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
 
         unsafe {
             let mut new_node = self.new_node(key, value);
-            unsafe { new_node.as_mut().parent = parent };
+            new_node.as_mut().parent = parent;
 
             match node_position {
                 NodePosition::Left => {
@@ -136,8 +136,7 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
         K: Borrow<Q>,
         Q: Ord,
     {
-        let mut parent = self.header;
-        let mut cur: NodePtr<K, V> = unsafe { parent.as_ref().right };
+        let mut cur: NodePtr<K, V> = unsafe { self.header.as_ref().right };
 
         while !self.is_nil(cur) {
             let cur_mut = unsafe { cur.as_mut() };
@@ -154,13 +153,10 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
                     let mut inorder_predecessor = self.inorder_predecessor(cur);
 
                     unsafe {
+                        std::mem::swap(inorder_predecessor.as_mut().key_mut(), cur_mut.key_mut());
                         std::mem::swap(
-                            inorder_predecessor.as_mut().key.assume_init_mut(),
-                            cur_mut.key.assume_init_mut(),
-                        );
-                        std::mem::swap(
-                            inorder_predecessor.as_mut().value.assume_init_mut(),
-                            cur_mut.value.assume_init_mut(),
+                            inorder_predecessor.as_mut().value_mut(),
+                            cur_mut.value_mut(),
                         );
                     }
 
@@ -173,10 +169,8 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
             }
 
             if key < k {
-                parent = cur;
                 cur = cur_mut.left;
             } else {
-                parent = cur;
                 cur = cur_mut.right;
             }
         }
@@ -241,10 +235,7 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        RBTree,
-        binary_tree::{BinaryTree, NodePosition},
-    };
+    use crate::RBTree;
 
     use super::BinarySearchTree;
 

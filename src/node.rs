@@ -1,7 +1,6 @@
 use std::{
-    fmt::{Debug, Display},
+    fmt::Debug,
     mem::{ManuallyDrop, MaybeUninit},
-    panic,
     ptr::NonNull,
 };
 
@@ -34,6 +33,7 @@ impl<K: Key, V: Value> RBNode<K, V> {
         unsafe { self.key.assume_init_ref() }
     }
 
+    #[allow(dead_code)]
     pub(crate) unsafe fn key_mut(&mut self) -> &mut K {
         unsafe { self.key.assume_init_mut() }
     }

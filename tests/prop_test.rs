@@ -31,31 +31,3 @@ proptest! {
         }
     }
 }
-
-#[test]
-#[ignore]
-fn minimal() {
-    let keys = vec![2, 1];
-    let mut tree = RBTree::new();
-    for key in &keys {
-        tree.insert(*key, *key);
-        if let Err(e) = tree.validate() {
-            panic!("Tree invalid after initial insertions: {}", e);
-        }
-    }
-
-    tree.display();
-
-    for key in &keys {
-        assert!(tree.get(key).is_some());
-    }
-
-    for key in &keys {
-        tree.remove(key);
-        println!("after removing {key}");
-        tree.display();
-        if let Err(e) = tree.validate() {
-            panic!("Tree invalid after removing {}: {}", key, e);
-        }
-    }
-}

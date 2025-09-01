@@ -5,6 +5,8 @@ fn main() {
     tree.insert(1, 1);
     tree.insert(2, 2);
 
+    tree.display();
+
     for item in tree {
         println!("{:?}", item);
     }
