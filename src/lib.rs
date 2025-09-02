@@ -277,8 +277,7 @@ impl<K: Key, V: Value> RBTree<K, V> {
 
         unsafe {
             let removed_box = Box::from_raw(removed.as_ptr());
-            let removed_node = *removed_box;
-            let value = ManuallyDrop::into_inner(removed_node.value.assume_init());
+            let value = ManuallyDrop::into_inner(removed_box.value.assume_init());
             self.len -= 1;
             Some(value)
         }
