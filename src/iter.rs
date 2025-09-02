@@ -1,4 +1,4 @@
-use std::{collections::HashSet, mem::ManuallyDrop};
+use std::mem::ManuallyDrop;
 
 use crate::{
     RBTree,
@@ -9,7 +9,6 @@ use crate::{
 pub struct RBTreeIntoIter<K: Key, V: Value> {
     ptr: NodePtr<K, V>,
     rb_tree: ManuallyDrop<RBTree<K, V>>,
-    consumed_nodes: HashSet<NodePtr<K, V>>,
 }
 
 impl<K: Key, V: Value> Iterator for RBTreeIntoIter<K, V> {
@@ -27,8 +26,6 @@ impl<K: Key, V: Value> Iterator for RBTreeIntoIter<K, V> {
             let key = ManuallyDrop::into_inner(key_wrapper);
             let value = ManuallyDrop::into_inner(value_wrapper);
 
-            // Track this node as consumed
-            self.consumed_nodes.insert(self.ptr);
             self.ptr = next;
             Some((key, value))
         }
@@ -37,35 +34,22 @@ impl<K: Key, V: Value> Iterator for RBTreeIntoIter<K, V> {
 
 impl<K: Key, V: Value> Drop for RBTreeIntoIter<K, V> {
     fn drop(&mut self) {
-        // Manually clean up all nodes, handling consumed vs unconsumed differently
-        let mut all_nodes = vec![];
-        self.rb_tree.traverse(|node| {
-            all_nodes.push(node);
-        });
+        // Use a loop to consume all (K V)
+        for _ in &mut *self {}
 
         // Clean up data nodes
-        for node in all_nodes {
-            unsafe {
-                let mut b = Box::from_raw(node.as_ptr());
+        let mut nodes_to_dealloc = vec![];
 
-                // Check if this node's key/value were consumed during iteration
-                if self.consumed_nodes.contains(&node) {
-                    // Key/value already moved out, just drop the box
-                    // Don't try to drop the ManuallyDrop contents
-                } else {
-                    // Key/value still present, drop them properly
-                    if b.key.as_ptr().is_null() == false {
-                        ManuallyDrop::drop(b.key.assume_init_mut());
-                    }
-                    if b.value.as_ptr().is_null() == false {
-                        ManuallyDrop::drop(b.value.assume_init_mut());
-                    }
-                }
-                drop(b);
+        self.rb_tree.traverse(|node_ptr| {
+            nodes_to_dealloc.push(node_ptr);
+        });
+
+        for node_ptr in nodes_to_dealloc {
+            unsafe {
+                drop(Box::from_raw(node_ptr.as_ptr()));
             }
         }
 
-        // Clean up sentinel nodes
         unsafe {
             drop(Box::from_raw(self.rb_tree.header.as_ptr()));
             drop(Box::from_raw(self.rb_tree.nil.as_ptr()));
@@ -82,7 +66,6 @@ impl<K: Key, V: Value> IntoIterator for RBTree<K, V> {
         RBTreeIntoIter {
             ptr: first,
             rb_tree: ManuallyDrop::new(self),
-            consumed_nodes: HashSet::new(),
         }
     }
 }
