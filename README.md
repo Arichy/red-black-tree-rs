@@ -98,6 +98,8 @@ Performance comparison for inserting elements into different tree structures:
 | **BTreeMap**   | ~142 μs 🏆                        | ~155 μs 🏆                            |
 | **Simple BST** | ~415 μs                           | ~35.3 ms ⚠️ (degenerate case)         |
 
+![insert comparison](comparison.png)
+
 **Key Insights:**
 
 - ✅ RBTree maintains consistent O(log n) performance regardless of input pattern
