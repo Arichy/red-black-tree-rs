@@ -48,7 +48,7 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
             let k = unsafe { cur_node.key() };
 
             if key == k.borrow() {
-                return unsafe { Some(cur_node.value.assume_init_ref()) };
+                return unsafe { Some(cur_node.value()) };
             }
 
             if key < k.borrow() {
@@ -74,7 +74,7 @@ impl<K: Key, V: Value> BinarySearchTree<K, V> for RBTree<K, V> {
             let k = unsafe { cur_node.key().borrow() };
 
             if key == k {
-                return unsafe { Some(cur.as_mut().value.assume_init_mut()) };
+                return unsafe { Some(cur.as_mut().value_mut()) };
             }
 
             if key < k {

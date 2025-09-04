@@ -86,7 +86,7 @@ cargo run --example iter
 
 ## Benchmarks 📊
 
-Our Red-Black Tree implementation is benchmarked against Rust's standard `BTreeMap` and a simple Binary Search Tree (BST) implementation. Here are the performance characteristics:
+Our Red-Black Tree implementation is benchmarked against Rust's standard `BTreeMap` and a simple Binary Search Tree (BST) implementation. Here are the performance characteristics (tested on MacBook Pro with M4 Pro)
 
 ### Insert Operations
 
